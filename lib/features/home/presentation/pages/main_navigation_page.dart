@@ -2,29 +2,84 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/theme/app_colors.dart';
 import '../../../product/presentation/widgets/product_cart.dart';
-import '../providers/home_providers.dart';
-import '../../../home/presentation/widgets/empty_state_widget.dart';
-
-// Import your new widgets
 import '../../../product/presentation/widgets/category_list.dart';
-// import '../widgets/seasonal_sale_banner.dart';
 import '../../../product/presentation/widgets/seasonal_sale_banner.dart';
+import '../providers/home_providers.dart';
+import '../widgets/empty_state_widget.dart';
+import 'explore_page.dart';
+import 'wishlist_page.dart';
+import 'profile_page.dart';
 
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+// Provider to track current navigation index
+final navigationIndexProvider = StateProvider<int>((ref) => 0);
+
+class MainNavigationPage extends ConsumerWidget {
+  const MainNavigationPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // UPDATED: Watch the filtered provider instead of the raw productsProvider
+    final currentIndex = ref.watch(navigationIndexProvider);
+
+    // List of pages corresponding to each navigation item
+    final pages = const [
+      HomePageContent(), // Home page without bottom nav (we add it here)
+      ExplorePage(),
+      WishlistPage(),
+      ProfilePage(),
+    ];
+
+    return Scaffold(
+      body: IndexedStack(
+        index: currentIndex,
+        children: pages,
+      ),
+      bottomNavigationBar: _buildBottomNav(ref, currentIndex),
+    );
+  }
+
+  Widget _buildBottomNav(WidgetRef ref, int currentIndex) {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: AppColors.accentRed,
+      unselectedItemColor: AppColors.secondary,
+      currentIndex: currentIndex,
+      onTap: (index) {
+        ref.read(navigationIndexProvider.notifier).state = index;
+      },
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.compass_calibration),
+          label: 'Explore',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.favorite_border),
+          label: 'Wishlist',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profile',
+        ),
+      ],
+    );
+  }
+}
+
+// Separate widget for HomePage content (without bottom nav since it's managed here)
+class HomePageContent extends ConsumerWidget {
+  const HomePageContent({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final filteredProductsAsync = ref.watch(filteredProductsProvider);
-  
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
-      bottomNavigationBar: _buildBottomNav(),
       body: RefreshIndicator(
-        // Pull-to-refresh: Refresh both categories and products
         onRefresh: () async {
           ref.invalidate(categoriesProvider);
           ref.invalidate(productsProvider);
@@ -37,36 +92,28 @@ class HomePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                
                 // 1. Search Bar
                 _buildSearchBar(ref),
                 const SizedBox(height: 25),
-
                 // 2. Categories Horizontal List
-                const HomeCategoryList(), 
+                const HomeCategoryList(),
                 const SizedBox(height: 25),
-
                 // 3. Promo Banner
                 const SeasonalSaleBanner(),
                 const SizedBox(height: 25),
-
                 // 4. Trending Header
                 _buildSectionHeader("Trending Now"),
                 const SizedBox(height: 30),
-
-                // 5. Product Grid (Now using filtered data)
+                // 5. Product Grid
                 filteredProductsAsync.when(
                   data: (products) {
-                    /* If no products match the selected category */
                     if (products.isEmpty) {
                       return EmptyStateWidget(
-                        title: "No Products Found", 
-                        message: "We don't have items for this category yet.", 
-                        onRetry: () => ref.invalidate(productsProvider), 
+                        title: "No Products Found",
+                        message: "We don't have items for this category yet.",
+                        onRetry: () => ref.invalidate(productsProvider),
                       );
                     }
-
-                    /* If data exists */
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -82,16 +129,12 @@ class HomePage extends ConsumerWidget {
                       },
                     );
                   },
-                  /* Show loading spinner */
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40.0),
-                      child: CircularProgressIndicator(
-                        color: AppColors.accentRed,
-                      ),
+                      child: CircularProgressIndicator(color: AppColors.accentRed),
                     ),
                   ),
-                  /* Show error message */
                   error: (err, stack) => Center(
                     child: Column(
                       children: [
@@ -113,8 +156,6 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  // --- UI Components ---
-
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.background,
@@ -125,49 +166,57 @@ class HomePage extends ConsumerWidget {
         style: TextStyle(color: AppColors.primary, fontSize: 24, fontWeight: FontWeight.bold),
       ),
       actions: [
-        IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none, color: AppColors.primary)),
-        IconButton(onPressed: () {}, icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary)),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.notifications_none, color: AppColors.primary),
+        ),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
+        ),
       ],
     );
   }
 
   Widget _buildSearchBar(WidgetRef ref) {
     final searchQuery = ref.watch(searchQueryProvider);
-    
-    return _SearchBar(searchQuery: searchQuery, onChanged: (value) {
-      ref.read(searchQueryProvider.notifier).state = value;
-    }, onClear: () {
-      ref.read(searchQueryProvider.notifier).state = '';
-    });
+    return _SearchBar(
+      searchQuery: searchQuery,
+      onChanged: (value) {
+        ref.read(searchQueryProvider.notifier).state = value;
+      },
+      onClear: () {
+        ref.read(searchQueryProvider.notifier).state = '';
+      },
+    );
   }
 
   Widget _buildSectionHeader(String title) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
-        const Text("View All", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.accentRed)),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppColors.accentRed,
-      unselectedItemColor: AppColors.secondary,
-      currentIndex: 0,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.compass_calibration), label: 'Explore'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Wishlist'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        const Text(
+          "View All",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.accentRed,
+          ),
+        ),
       ],
     );
   }
 }
 
-// Separate StatefulWidget for search bar to properly manage TextEditingController
+// Search bar widget
 class _SearchBar extends StatefulWidget {
   final String searchQuery;
   final ValueChanged<String> onChanged;
@@ -195,7 +244,6 @@ class _SearchBarState extends State<_SearchBar> {
   @override
   void didUpdateWidget(_SearchBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update controller when search query changes externally (e.g., clear button)
     if (oldWidget.searchQuery != widget.searchQuery) {
       _controller.text = widget.searchQuery;
       _controller.selection = TextSelection.collapsed(offset: widget.searchQuery.length);

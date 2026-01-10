@@ -4,6 +4,7 @@ import '../../../../common/theme/app_colors.dart';
 import '../../../product/domain/entities/prodcut_entity.dart';
 import '../../../product/presentation/widgets/product_cart.dart';
 import '../providers/home_providers.dart';
+import '../../../home/presentation/widgets/empty_state_widget.dart';
 
 
 // Import your new widgets
@@ -47,20 +48,33 @@ class HomePage extends ConsumerWidget {
 
               // 5. Product Grid
               productAsync.when(
-                data: (products) => GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: products.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.55,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 20,
-                  ),
-                  itemBuilder: (context, index){
-                    return ProductCard(product: products[index]);
-                  },
-                ),
+                data: (products){
+                  /* If no data from database */
+                  if(products.isEmpty){
+                    return EmptyStateWidget(
+                      title: "No Product Found", 
+                      message: "Our shelves are empty at the moments. Check back soon for new arrivales!", 
+                      onRetry: () => ref.refresh(productsProvider), /* This Triggers the api again */
+                    );
+                  }
+
+                /* If data exists */
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: products.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.55,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 20,
+                    ),
+                    itemBuilder: (context, index){
+                      return ProductCard(product: products[index]);
+                    },
+                    
+                  );
+                },
                 /* Show loading spinner while Render API wakes up */
                 loading: () => const Center(
                   child: Padding(

@@ -7,12 +7,33 @@ import '../../../product/data/models/product_model.dart';
 
 // Category Provider
 final categoriesProvider = FutureProvider<List<CategoryItem>>((ref) async {
-  // Use the provider from api_client.dart
   final dio = ref.watch(dioProvider); 
   
-  final response = await dio.get(ApiEndpoints.categories);
-  final List data = response.data;
-  return data.map((json) => CategoryItem.fromJson(json)).toList();
+  try {
+    final response = await dio.get(ApiEndpoints.categories);
+    
+    // 1. Debugging: This helps you see exactly what the API is sending in your console
+    print("Category API Response: ${response.data}");
+
+    // 2. Logic to handle both List and Object responses
+    List<dynamic> rawData = [];
+    
+    if (response.data is List) {
+      // If the API returns [ {...}, {...} ]
+      rawData = response.data;
+    } else if (response.data is Map) {
+      // If the API returns { "categories": [...] } or { "data": [...] }
+      rawData = response.data['categories'] ?? response.data['data'] ?? [];
+    }
+
+    // 3. Map to your model
+    return rawData.map((json) => CategoryItem.fromJson(json)).toList();
+    
+  } catch (e) {
+    print("Category Provider Error: $e");
+    // Returning an empty list so the app doesn't crash
+    return []; 
+  }
 });
 
 // Product Provider

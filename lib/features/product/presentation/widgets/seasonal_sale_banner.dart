@@ -1,73 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../home/presentation/providers/home_providers.dart';
+import '../../../../common/theme/app_colors.dart';
 
-class SeasonalSaleBanner extends StatelessWidget {
+class SeasonalSaleBanner extends ConsumerWidget {
   const SeasonalSaleBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 180,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.black.withOpacity(0.2), // Light overlay for text contrast
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productsAsync = ref.watch(productsProvider);
+
+    return productsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
+
+        final featuredProduct = products.first;
+
+        return Container(
+          width: double.infinity,
+          // 1. Remove fixed height or change to constraints
+          constraints: const BoxConstraints(minHeight: 160),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            image: DecorationImage(
+              image: NetworkImage(featuredProduct.imageUrl),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.5), // Slightly darker for better contrast
+                BlendMode.darken,
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
+          child: Padding(
+            // 2. Increase padding slightly to give content room
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min, // 3. Allow column to shrink/wrap
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    "SUMMER 24",
-                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                const Text(
+                  "SEASONAL SALE",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12, // Slightly smaller to save space
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  "Seasonal Sale",
-                  style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                // 4. Wrap text in Flexible or use maxLines to prevent overflow
+                Text(
+                  "Up to 40% Off on\n${featuredProduct.productName}",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20, // Reduced from 22 to fit better
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
                 ),
-                const Text(
-                  "Up to 50% Off Selected Items",
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+                // 5. Button
                 SizedBox(
-                  width: 120,
+                  height: 36, // Fixed height for button to keep it compact
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppColors.accentRed,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
                     onPressed: () {},
-                    child: const Text("Shop Now", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text("Shop Now", style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        );
+      },
+      loading: () => Container(
+        height: 160,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
+      error: (err, stack) => const SizedBox.shrink(),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/features/cart/presentation/pages/cart_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../widgets/empty_state_widget.dart';
 import 'explore_page.dart';
 import 'wishlist_page.dart';
 import 'profile_page.dart';
+import '../../../cart/presentation/providers/cart_provider.dart';
 
 // Provider to track current navigation index
 final navigationIndexProvider = StateProvider<int>((ref) => 0);
@@ -78,7 +80,7 @@ class HomePageContent extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(categoriesProvider);
@@ -156,7 +158,7 @@ class HomePageContent extends ConsumerWidget {
     );
   }
 
-  AppBar _buildAppBar() {
+AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
@@ -170,14 +172,34 @@ class HomePageContent extends ConsumerWidget {
           onPressed: () {},
           icon: const Icon(Icons.notifications_none, color: AppColors.primary),
         ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
+        // Use Consumer to update ONLY the badge when the cart changes
+        Consumer(
+          builder: (context, ref, child) {
+            final cartCount = ref.watch(cartCountProvider);
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+              child: Badge(
+                label: Text('$cartCount'),
+                isLabelVisible: cartCount > 0,
+                backgroundColor: AppColors.accentRed,
+                child: IconButton(
+                  onPressed: () {
+                    // FIXED: Now works because context is available
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartPage()),
+                    );
+                  },
+                  icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
-
+} 
   Widget _buildSearchBar(WidgetRef ref) {
     final searchQuery = ref.watch(searchQueryProvider);
     return _SearchBar(
@@ -214,7 +236,6 @@ class HomePageContent extends ConsumerWidget {
       ],
     );
   }
-}
 
 // Search bar widget
 class _SearchBar extends StatefulWidget {

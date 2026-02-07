@@ -1,5 +1,6 @@
 class ProductEntity {
   final String id;
+  final String categoryId; // Added to allow category filtering
   final String imageUrl;
   final String brandName;
   final String productName;
@@ -10,6 +11,7 @@ class ProductEntity {
 
   ProductEntity({
     required this.id,
+    required this.categoryId, // Required field
     required this.imageUrl,
     required this.brandName,
     required this.productName,
@@ -20,9 +22,11 @@ class ProductEntity {
   });
 }
 
+// Updated Static Products with categoryId
 final List<ProductEntity> staticProducts = [
   ProductEntity(
     id: '1',
+    categoryId: 'all', // Default or specific category ID
     imageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500',
     brandName: 'LUMIERE STUDIO',
     productName: 'Oversized Linen Shirt',
@@ -31,6 +35,7 @@ final List<ProductEntity> staticProducts = [
   ),
   ProductEntity(
     id: '2',
+    categoryId: 'bags', // Example category ID
     imageUrl: 'https://images.unsplash.com/photo-1548036235-861c005a2460?w=500',
     brandName: 'AURA ATELIER',
     productName: 'Quilted Leather Bag',

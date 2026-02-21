@@ -5,16 +5,28 @@ import '../../utils/validators.dart';
 import '../../utils/router/app_router.dart'; 
 import '../home/home_view.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscurePass = true;
 
-  LoginView({super.key});
+  @override
+  void dispose() {
+    emailController.dispose();
+    passController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     /* Listen to the AuthController for loading state changes */
     final auth = Provider.of<AuthController>(context);
 
@@ -64,10 +76,16 @@ class LoginView extends StatelessWidget {
                   /* Password Field */
                   TextFormField(
                     controller: passController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: _obscurePass,
+                    decoration: InputDecoration(
                       labelText: "Password",
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePass ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                      ),
                     ),
                     validator: AppValidators.validatePassword,
                   ),
@@ -115,8 +133,9 @@ class LoginView extends StatelessWidget {
                               }
                             }
                           },
-                    child: auth.isLoading
-                        ? const SizedBox(
+
+                    /* This style ternary operatore: sytax condition ? valueIfTrue : valueIfFalse; */
+                    child: auth.isLoading ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(

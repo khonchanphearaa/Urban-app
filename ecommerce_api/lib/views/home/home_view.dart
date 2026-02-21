@@ -9,7 +9,9 @@ import '../../services/secure_storage_service.dart';
 import '../../widgets/base_modal.dart';
 import '../../widgets/not_found_widget.dart';
 import '../../widgets/profile_drawer.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 import '../cart/cart_view.dart';
+import '../profile/profile_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -35,12 +37,19 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     final productProv = context.watch<ProductController>();
+    final cart = context.watch<CartController>();
+    final itemCount = cart.items.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      extendBody: true,
       appBar: _buildAppBar(),
       drawer: const ProfileDrawer(),
       body: SafeArea(
+        bottom: false, /* for change bg transparent btn navbar */
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
@@ -69,16 +78,36 @@ class _HomeViewState extends State<HomeView> {
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: productProv.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildProductGrid(productProv.products),
+                child: productProv.isLoading ? const Center(child: CircularProgressIndicator()) : _buildProductGrid(productProv.products),
               ),
             ],
           ),
         ),
       ),
       floatingActionButton: _buildCartFAB(),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: 0,
+        cartCount: itemCount,
+        onTap: _handleNavTap,
+      ),
     );
+  }
+
+  void _handleNavTap(int index) {
+    if (index == 0) return;
+    if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const CartView()),
+      );
+      return;
+    }
+    if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileView()),
+      );
+    }
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -98,6 +127,8 @@ class _HomeViewState extends State<HomeView> {
           onPressed: () {},
           icon: const Icon(Icons.notifications_none, color: Colors.black),
         ),
+
+        /* Logout near header right */
         IconButton(
           onPressed: () async {
             final confirmed = await BaseModal.confirm(
@@ -123,6 +154,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // Search
   Widget _buildSearchBar() {
     return TextField(
       decoration: InputDecoration(
@@ -166,24 +198,27 @@ class _HomeViewState extends State<HomeView> {
               margin: const EdgeInsets.only(right: 12),
               child: Column(
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? Colors.black : Colors.transparent,
-                        width: 2,
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? Colors.black : Colors.transparent,
+                          width: 2,
+                        ),
                       ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: isSelected ? Colors.black : Colors.white,
-                      child: Text(
-                        c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
+                      child: CircleAvatar(
+                        radius: 28,
+                        backgroundColor: isSelected ? Colors.black : Colors.white,
+                        child: Text(
+                          c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -196,9 +231,7 @@ class _HomeViewState extends State<HomeView> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected ? Colors.black : Colors.black54,
                     ),
                   ),
@@ -246,6 +279,7 @@ class _HomeViewState extends State<HomeView> {
               AspectRatio(
                 aspectRatio: 1,
                 child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
                   onEnter: (_) => setState(() => _hoveredProductIndex = index),
                   onExit: (_) => setState(() => _hoveredProductIndex = null),
                   child: Stack(
@@ -255,9 +289,7 @@ class _HomeViewState extends State<HomeView> {
                         child: Hero(
                           tag: product.id,
                           child: Image.network(
-                            product.imageUrl.isNotEmpty
-                                ? product.imageUrl[0]
-                                : "",
+                            product.imageUrl.isNotEmpty ? product.imageUrl[0] : "",
                             fit: BoxFit.cover,
                             width: double.infinity,
                             errorBuilder: (context, error, stackTrace) =>
@@ -275,17 +307,13 @@ class _HomeViewState extends State<HomeView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: product.stock > 10
-                                ? Colors.green
-                                : (product.stock > 0
-                                      ? Colors.orange
-                                      : Colors.red),
+
+                            /* IF stock > 10 is color: green, If stock > 0 color: orange, < 0 color red out of stock */
+                            color: product.stock > 10 ? Colors.green : (product.stock > 0 ? Colors.orange : Colors.red),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            product.stock > 0
-                                ? 'Stock: ${product.stock}'
-                                : 'Out of Stock',
+                            product.stock > 0 ? 'Stock: ${product.stock}' : 'Out of Stock',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -294,6 +322,7 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ),
                       ),
+
                       // Add to cart button on hover (positioned bottom-right)
                       Positioned(
                         bottom: 8,
@@ -304,9 +333,7 @@ class _HomeViewState extends State<HomeView> {
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: product.stock > 0 && !isAdding
-                                  ? () => _addToCartQuick(product)
-                                  : null,
+                              onTap: product.stock > 0 && !isAdding ? () => _addToCartQuick(product) : null,
                               child: Container(
                                 width: 40,
                                 height: 40,
@@ -314,8 +341,7 @@ class _HomeViewState extends State<HomeView> {
                                   color: Colors.transparent,
                                   shape: BoxShape.circle,
                                 ),
-                                child: isAdding
-                                    ? const Padding(
+                                child: isAdding ? const Padding(
                                         padding: EdgeInsets.all(10),
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
@@ -395,7 +421,10 @@ class _HomeViewState extends State<HomeView> {
           MaterialPageRoute(builder: (_) => const CartView()),
         );
       },
-      backgroundColor: const Color.fromARGB(32, 0, 0, 0),
+
+      /* background transparent for floatingActionButton with icon shop  */
+      // backgroundColor: const Color.fromARGB(19, 0, 0, 0),
+      backgroundColor: const Color(0xFF000000).withValues(alpha: 0.074),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

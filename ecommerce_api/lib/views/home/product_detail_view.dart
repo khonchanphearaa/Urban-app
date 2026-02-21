@@ -5,10 +5,17 @@ import '../../models/product_model.dart';
 import '../../controllers/cart_controller.dart';
 import '../cart/cart_view.dart';
 
-class ProductDetailView extends StatelessWidget {
+class ProductDetailView extends StatefulWidget {
   final ProductModel product;
 
   const ProductDetailView({super.key, required this.product});
+
+  @override
+  State<ProductDetailView> createState() => _ProductDetailViewState();
+}
+
+class _ProductDetailViewState extends State<ProductDetailView> {
+  bool _isAddingToCart = false;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,7 @@ class ProductDetailView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.categoryName.toUpperCase(),
+                    widget.product.categoryName.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
@@ -38,7 +45,7 @@ class ProductDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    product.name,
+                    widget.product.name,
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -49,9 +56,9 @@ class ProductDetailView extends StatelessWidget {
                   _buildPriceSection(),
                   const SizedBox(height: 6),
                   Text(
-                    "Stock: ${product.stock}",
+                    "Stock: ${widget.product.stock}",
                     /* Color stock if inStock is color green, If unStock is red */
-                    style: TextStyle(color: product.stock > 0 ? Colors.green[700] : Colors.red[700]),
+                    style: TextStyle(color: widget.product.stock > 0 ? Colors.green[700] : Colors.red[700]),
                   ),
                   const SizedBox(height: 15),
                   _buildRatingSection(),
@@ -65,7 +72,7 @@ class ProductDetailView extends StatelessWidget {
                   const SizedBox(height: 25),
                   
                   /* detail for description this dynamic from api */
-                  _buildExpandableSection("Product Description", product.description),
+                  _buildExpandableSection("Product Description", widget.product.description),
 
                   /* This data static for Shipping & Retrun */
                   _buildExpandableSection("Shipping & Returns", "Free standard shipping on orders over \$50. Returns accepted within 30 days."),
@@ -113,17 +120,17 @@ class ProductDetailView extends StatelessWidget {
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
-          tag: product.id,
+          tag: widget.product.id,
           child: Swiper(
             itemBuilder: (BuildContext context, int index) {
               return Image.network(
-                product.imageUrl[index],
+                widget.product.imageUrl[index],
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => 
                     const Center(child: Icon(Icons.broken_image, size: 50)),
               );
             },
-            itemCount: product.imageUrl.length,
+            itemCount: widget.product.imageUrl.length,
             autoplay: true, // Auto delay enabled
             autoplayDelay: 4000, // 4 seconds
             duration: 800,
@@ -145,12 +152,12 @@ class ProductDetailView extends StatelessWidget {
     return Row(
       children: [
         Text(
-          "\$${product.price}",
+          "\$${widget.product.price}",
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 10),
         Text(
-          "\$${(product.price * 1.2).toStringAsFixed(2)}",
+          "\$${(widget.product.price * 1.2).toStringAsFixed(2)}",
           style: const TextStyle(
             fontSize: 16,
             color: Colors.grey,
@@ -233,28 +240,33 @@ class ProductDetailView extends StatelessWidget {
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: product.stock > 0 ? () async {
-                      final cart = Provider.of<CartController>(context, listen: false);
-                      final success = await cart.addToCart(
-                        context,
-                        productId: product.id,
-                        name: product.name,
-                        imageUrl: product.imageUrl.isNotEmpty ? product.imageUrl[0] : '',
-                        size: 'M',
-                        quantity: 1,
-                        price: product.price,
-                      );
-                      // Only navigate when addToCart succeeded
-                      if (success && context.mounted) {
-                        Navigator.push(
+              onPressed: (widget.product.stock > 0 && !_isAddingToCart) ? () async {
+                      setState(() => _isAddingToCart = true);
+                      try {
+                        final cart = Provider.of<CartController>(context, listen: false);
+                        final success = await cart.addToCart(
                           context,
-                          MaterialPageRoute(builder: (_) => const CartView()),
+                          productId: widget.product.id,
+                          name: widget.product.name,
+                          imageUrl: widget.product.imageUrl.isNotEmpty ? widget.product.imageUrl[0] : '',
+                          size: 'M',
+                          quantity: 1,
+                          price: widget.product.price,
                         );
+                        // Only navigate when addToCart succeeded
+                        if (success && context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CartView()),
+                          );
+                        }
+                      } finally {
+                        setState(() => _isAddingToCart = false);
                       }
                     }
                   : null,
-              icon: const Icon(Icons.shopping_bag_outlined),
-              label: Text(product.stock > 0 ? "Add to Cart" : "Out of Stock"),
+              icon: _isAddingToCart ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))) : const Icon(Icons.shopping_bag_outlined),
+              label: Text(_isAddingToCart ? "Adding..." : (widget.product.stock > 0 ? "Add to Cart" : "Out of Stock")),
             ),
           ),
         ],

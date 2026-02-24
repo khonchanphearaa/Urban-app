@@ -8,4 +8,5 @@ class ApiConstants {
   static const String verifyOtp = '$apiBaseUrl/auth/verify-otp';
   static const String verityOtp = '$apiBaseUrl/auth/verity-otp';
   static const String resetPassword = '$apiBaseUrl/auth/reset-password';
+  static const String updateProfile = '$apiBaseUrl/auth/update-profile';
 }

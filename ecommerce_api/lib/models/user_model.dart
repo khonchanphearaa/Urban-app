@@ -3,6 +3,7 @@ class UserModel {
   final String? name;
   final String email;
   final String? token;
+  final String? refreshToken;
   final String? role;
   final String? avatar;
 
@@ -11,6 +12,7 @@ class UserModel {
     this.name,
     required this.email,
     this.token,
+    this.refreshToken,
     this.role,
     this.avatar,
   });
@@ -63,13 +65,42 @@ class UserModel {
         map['access_token'] as String? ??
         map['accessToken'] as String?;
 
+    String? refreshToken;
+    refreshToken =
+        json['refresh_token'] as String? ??
+        json['refreshToken'] as String?;
+    refreshToken ??=
+        map['refresh_token'] as String? ??
+        map['refreshToken'] as String?;
+
     return UserModel(
       id: id,
       name: name,
       email: email,
       token: token,
+      refreshToken: refreshToken,
       role: role,
       avatar: avatar,
+    );
+  }
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? token,
+    String? refreshToken,
+    String? role,
+    String? avatar,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      token: token ?? this.token,
+      refreshToken: refreshToken ?? this.refreshToken,
+      role: role ?? this.role,
+      avatar: avatar ?? this.avatar,
     );
   }
 
@@ -79,6 +110,7 @@ class UserModel {
       'name': name,
       'email': email,
       'token': token,
+      'refreshToken': refreshToken,
       'role': role,
       'avatar': avatar,
     };

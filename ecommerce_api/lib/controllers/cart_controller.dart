@@ -5,6 +5,7 @@ import '../models/cart_item.dart';
 import '../models/cart_model.dart';
 import '../services/secure_storage_service.dart';
 import '../constants/api_constants.dart';
+import '../utils/router/app_router.dart';
 
 class CartController extends ChangeNotifier {
   bool _isLoading = false;
@@ -35,8 +36,20 @@ class CartController extends ChangeNotifier {
       );
 
       final token = await SecureStorageService.readToken();
+      if (token == null || token.isEmpty) {
+        if (!context.mounted) return false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login first to add items to cart'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        Navigator.pushNamed(context, AppRouter.login);
+        return false;
+      }
+
       final headers = <String, String>{'Content-Type': 'application/json'};
-      if (token != null && token.isNotEmpty) headers['Authorization'] = 'Bearer $token';
+      headers['Authorization'] = 'Bearer $token';
 
       final response = await http.post(
         Uri.parse('${ApiConstants.apiBaseUrl}/cart/add'),

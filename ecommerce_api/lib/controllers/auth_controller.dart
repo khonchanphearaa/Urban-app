@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import '../services/secure_storage_service.dart';
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
@@ -12,6 +13,7 @@ class AuthController extends ChangeNotifier {
 
   /* For get token for requried when get production for api  */
   String? get token => user?.token;
+  String? get refreshToken => user?.refreshToken;
 
   Map<String, String> get authHeaders => user?.authHeaders() ?? {};
 
@@ -25,60 +27,160 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Map<String, dynamic> _normalizeAuthBody(Map<String, dynamic> body) {
+    final Map<String, dynamic> normalized = {};
+
+    if (body['user'] != null) normalized['user'] = body['user'];
+    if (body['token'] != null) normalized['token'] = body['token'];
+    if (body['access_token'] != null) normalized['token'] = body['access_token'];
+    if (body['accessToken'] != null) normalized['token'] = body['accessToken'];
+    if (body['refresh_token'] != null) {
+      normalized['refreshToken'] = body['refresh_token'];
+    }
+    if (body['refreshToken'] != null) {
+      normalized['refreshToken'] = body['refreshToken'];
+    }
+
+    if (body['data'] is Map) {
+      final data = body['data'] as Map<String, dynamic>;
+      if (data['user'] != null) normalized['user'] = data['user'];
+      if (data['token'] != null) normalized['token'] = data['token'];
+      if (data['access_token'] != null) normalized['token'] = data['access_token'];
+      if (data['accessToken'] != null) normalized['token'] = data['accessToken'];
+      if (data['refresh_token'] != null) {
+        normalized['refreshToken'] = data['refresh_token'];
+      }
+      if (data['refreshToken'] != null) {
+        normalized['refreshToken'] = data['refreshToken'];
+      }
+    }
+
+    if (normalized['user'] == null && body.containsKey('email')) {
+      normalized['user'] = body;
+    }
+
+    return normalized;
+  }
+
+  String _extractErrorMessage(String rawBody, {String fallback = 'Request failed'}) {
+    try {
+      final decoded = jsonDecode(rawBody);
+      if (decoded is Map<String, dynamic>) {
+        final fromData = decoded['data'];
+
+        if (fromData is Map<String, dynamic> && fromData['message'] != null) {
+          return fromData['message'].toString();
+        }
+
+        if (fromData is Map<String, dynamic> && fromData['error'] != null) {
+          return fromData['error'].toString();
+        }
+
+        if (decoded['errors'] is List && (decoded['errors'] as List).isNotEmpty) {
+          return (decoded['errors'] as List).first.toString();
+        }
+
+        if (decoded['errors'] is Map<String, dynamic>) {
+          final errorsMap = decoded['errors'] as Map<String, dynamic>;
+          for (final value in errorsMap.values) {
+            if (value is List && value.isNotEmpty) return value.first.toString();
+            if (value is String && value.trim().isNotEmpty) return value;
+          }
+        }
+
+        if (decoded['message'] != null) return decoded['message'].toString();
+        if (decoded['error'] != null) return decoded['error'].toString();
+      }
+
+      if (decoded is List && decoded.isNotEmpty) {
+        return decoded.first.toString();
+      }
+    } catch (_) {}
+
+    final plain = rawBody.trim();
+    if (plain.isNotEmpty) return plain;
+    return fallback;
+  }
+
+  String _mapLoginExceptionToMessage(Object e) {
+    return '';
+  }
+
   /* Control Login */
   Future<bool> login(String email, String password) async {
     _toggleLoading();
+    lastError = null;
     try {
+      final payload = jsonEncode({'email': email, 'password': password});
       final res = await http.post(
         Uri.parse(ApiConstants.login),
-        body: {'email': email, 'password': password},
-      );
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: payload,
+      ).timeout(const Duration(seconds: 20));
 
       /* Log request/response for debugging */
       debugPrint('Login response (${res.statusCode}): ${res.body}');
 
-      if (res.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(res.body);
-
-        /* Check if is not define accessToken */
-        final Map<String, dynamic> normalized = {};
-        if (body['user'] != null) normalized['user'] = body['user'];
-        if (body['token'] != null) normalized['token'] = body['token'];
-        if (body['access_token'] != null) {
-          normalized['token'] = body['access_token'];
-        }
-        if (body['accessToken'] != null) {
-          normalized['token'] = body['accessToken'];
-        }
-        if (body['data'] is Map) {
-          final data = body['data'] as Map<String, dynamic>;
-          if (data['user'] != null) normalized['user'] = data['user'];
-          if (data['token'] != null) normalized['token'] = data['token'];
-          if (data['access_token'] != null) {
-            normalized['token'] = data['access_token'];
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        Map<String, dynamic> body;
+        try {
+          final decoded = jsonDecode(res.body);
+          if (decoded is! Map<String, dynamic>) {
+            lastError = _extractErrorMessage(
+              res.body,
+              fallback: 'Invalid login response from server',
+            );
+            return false;
           }
-          if (data['accessToken'] != null) {
-            normalized['token'] = data['accessToken'];
-          }
+          body = decoded;
+        } catch (_) {
+          lastError = _extractErrorMessage(
+            res.body,
+            fallback: 'Invalid login response from server',
+          );
+          return false;
         }
-
-        if (normalized['user'] == null && body.containsKey('email')) {
-          normalized['user'] = body;
-        }
+        final normalized = _normalizeAuthBody(body);
 
         user = UserModel.fromJson(normalized);
+
+        if (user?.token == null || user!.token!.isEmpty) {
+          lastError = 'Login succeeded but no access token returned';
+          return false;
+        }
 
         /* Persist token and user to secure storage for mobile */
         try {
           final token = user?.token;
           if (token != null) await SecureStorageService.saveToken(token);
+          final refreshed = user?.refreshToken;
+          if (refreshed != null && refreshed.isNotEmpty) {
+            await SecureStorageService.saveRefreshToken(refreshed);
+          }
           await SecureStorageService.saveUser(user!.toJson());
         } catch (_) {}
 
+        lastError = null;
         return true;
       }
+
+      lastError = _extractErrorMessage(
+        res.body,
+        fallback: 'Invalid email or password',
+      );
+      return false;
+    } on TimeoutException {
+      lastError = 'Login request timed out. Please try again.';
+      return false;
+    } on http.ClientException catch (e) {
+      lastError = _mapLoginExceptionToMessage(e);
       return false;
     } catch (e) {
+      debugPrint('Login exception: $e');
+      lastError = _mapLoginExceptionToMessage(e);
       return false;
     } finally {
       _toggleLoading();
@@ -88,9 +190,22 @@ class AuthController extends ChangeNotifier {
   /* Load persisted user/token on startup */
   Future<void> _loadFromStorage() async {
     try {
+      final storedRefreshToken = await SecureStorageService.readRefreshToken();
       final userJson = await SecureStorageService.readUser();
       if (userJson != null) {
-        user = UserModel.fromJson(userJson);
+        final merged = Map<String, dynamic>.from(userJson);
+        final currentRefreshToken = merged['refreshToken'];
+        final isMissingRefresh =
+            currentRefreshToken == null ||
+            (currentRefreshToken is String && currentRefreshToken.isEmpty);
+
+        if (isMissingRefresh &&
+            storedRefreshToken != null &&
+            storedRefreshToken.isNotEmpty) {
+          merged['refreshToken'] = storedRefreshToken;
+        }
+
+        user = UserModel.fromJson(merged);
         notifyListeners();
         return;
       }
@@ -98,10 +213,113 @@ class AuthController extends ChangeNotifier {
       final token = await SecureStorageService.readToken();
       if (token != null) {
         /* If only token stored, create minimal user with token */
-        user = UserModel(id: null, name: null, email: '', token: token);
+        user = UserModel(
+          id: null,
+          name: null,
+          email: '',
+          token: token,
+          refreshToken: storedRefreshToken,
+        );
         notifyListeners();
       }
     } catch (_) {}
+  }
+
+
+  /* Control refresh token */
+  Future<bool> refreshAccessToken() async {
+    final currentRefreshToken =
+        refreshToken ?? await SecureStorageService.readRefreshToken();
+
+    if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
+      lastError = 'Session expired. Please login again.';
+      return false;
+    }
+
+    try {
+      final uri = Uri.parse(ApiConstants.refreshToken);
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      final payloads = [
+        {'refreshToken': currentRefreshToken},
+        {'refresh_token': currentRefreshToken},
+        {'token': currentRefreshToken},
+      ];
+
+      http.Response? res;
+      for (final payload in payloads) {
+        final candidate = await http.post(
+          uri,
+          headers: headers,
+          body: jsonEncode(payload),
+        );
+        res = candidate;
+        if (candidate.statusCode >= 200 && candidate.statusCode < 300) {
+          break;
+        }
+        if (candidate.statusCode != 400 &&
+            candidate.statusCode != 401 &&
+            candidate.statusCode != 422) {
+          break;
+        }
+      }
+
+      if (res == null) {
+        lastError = 'Failed to refresh session.';
+        return false;
+      }
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is! Map<String, dynamic>) {
+          lastError = 'Invalid refresh-token response.';
+          return false;
+        }
+
+        final normalized = _normalizeAuthBody(decoded);
+        final parsed = UserModel.fromJson(normalized);
+
+        final mergedUser = (user ??
+                UserModel(id: null, name: null, email: '', token: null))
+            .copyWith(
+              id: parsed.id,
+              name: parsed.name,
+              email: parsed.email.isNotEmpty ? parsed.email : null,
+              role: parsed.role,
+              avatar: parsed.avatar,
+              token: parsed.token,
+              refreshToken: parsed.refreshToken ?? currentRefreshToken,
+            );
+
+        if (mergedUser.token == null || mergedUser.token!.isEmpty) {
+          lastError = 'Refresh succeeded but no access token returned.';
+          return false;
+        }
+
+        user = mergedUser;
+        await SecureStorageService.saveToken(mergedUser.token!);
+        if (mergedUser.refreshToken != null &&
+            mergedUser.refreshToken!.isNotEmpty) {
+          await SecureStorageService.saveRefreshToken(mergedUser.refreshToken!);
+        }
+        await SecureStorageService.saveUser(mergedUser.toJson());
+        lastError = null;
+        notifyListeners();
+        return true;
+      }
+
+      lastError = _extractErrorMessage(
+        res.body,
+        fallback: 'Failed to refresh session.',
+      );
+      return false;
+    } catch (_) {
+      lastError = 'Failed to refresh session.';
+      return false;
+    }
   }
 
   /* Control Register */
@@ -366,6 +584,10 @@ class AuthController extends ChangeNotifier {
     final tokenToStore = updatedUser.token ?? token;
     if (tokenToStore != null && tokenToStore.isNotEmpty) {
       await SecureStorageService.saveToken(tokenToStore);
+    }
+    final refreshTokenToStore = updatedUser.refreshToken ?? refreshToken;
+    if (refreshTokenToStore != null && refreshTokenToStore.isNotEmpty) {
+      await SecureStorageService.saveRefreshToken(refreshTokenToStore);
     }
     await SecureStorageService.saveUser(updatedUser.toJson());
     notifyListeners();

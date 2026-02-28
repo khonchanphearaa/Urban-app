@@ -69,11 +69,11 @@ class AiChatController extends ChangeNotifier {
           isUser: false,
           createdAt: DateTime.now(),
         ),
-      );
+      ); 
     } catch (_) {
       _messages.add(
         AiChatMessage(
-          text: 'Sorry, AI chat is unavailable right now. Please try again.',
+          text: 'Sorry, AI chat is unavailable right now. Please try again.If not yet login, Please login or register',
           isUser: false,
           createdAt: DateTime.now(),
         ),

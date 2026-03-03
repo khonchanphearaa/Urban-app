@@ -4,11 +4,13 @@ import '../../views/auth/register_view.dart';
 import '../../views/auth/forgot_password.dart';
 import '../../views/auth/verify_otp_view.dart';
 import '../../views/auth/reset_password.dart';
+import '../../views/home/home_view.dart';
 import '../../views/home/product_detail_view.dart';
 import '../../models/product_model.dart';
 
 class AppRouter {
-  static const String login = '';
+  static const String home = '/';
+  static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String verifyOtp = '/verify-otp';
@@ -17,6 +19,8 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case home:
+        return MaterialPageRoute(builder: (_) => const HomeView());
       case login:
         return MaterialPageRoute(builder: (_) => LoginView());
       case register:

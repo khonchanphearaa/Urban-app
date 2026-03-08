@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:card_swiper/card_swiper.dart'; 
+import 'package:card_swiper/card_swiper.dart';
 import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../controllers/cart_controller.dart';
+import '../../controllers/wishlist_controller.dart';
 import '../cart/cart_view.dart';
 
 class ProductDetailView extends StatefulWidget {
@@ -23,7 +24,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-
           /* Immersive atuo-playing swiper header on image  */
           _buildSliverAppBar(context),
 
@@ -58,25 +58,38 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                   Text(
                     "Stock: ${widget.product.stock}",
                     /* Color stock if inStock is color green, If unStock is red */
-                    style: TextStyle(color: widget.product.stock > 0 ? Colors.green[700] : Colors.red[700]),
+                    style: TextStyle(
+                      color: widget.product.stock > 0
+                          ? Colors.green[700]
+                          : Colors.red[700],
+                    ),
                   ),
                   const SizedBox(height: 15),
                   _buildRatingSection(),
                   const SizedBox(height: 25),
-                  
+
                   // Size Selection
-                  const Text("Size", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Size",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   _buildSizeSelector(),
-                  
+
                   const SizedBox(height: 25),
-                  
+
                   /* detail for description this dynamic from api */
-                  _buildExpandableSection("Product Description", widget.product.description),
+                  _buildExpandableSection(
+                    "Product Description",
+                    widget.product.description,
+                  ),
 
                   /* This data static for Shipping & Retrun */
-                  _buildExpandableSection("Shipping & Returns", "Free standard shipping on orders over \$50. Returns accepted within 30 days."),
-                  const SizedBox(height: 100), 
+                  _buildExpandableSection(
+                    "Shipping & Returns",
+                    "Free standard shipping on orders over \$50. Returns accepted within 30 days.",
+                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -103,9 +116,36 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       actions: [
         CircleAvatar(
           backgroundColor: Colors.white.withValues(alpha: 0.8),
-          child: IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black),
-            onPressed: () {},
+          child: Consumer<WishlistController>(
+            builder: (context, wishlist, _) {
+              final isWishlisted = wishlist.isInWishlist(widget.product.id);
+              final isProcessing = wishlist.isProcessing(widget.product.id);
+
+              return IconButton(
+                icon: isProcessing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.red,
+                        ),
+                      )
+                    : Icon(
+                        isWishlisted ? Icons.favorite : Icons.favorite_border,
+                        color: isWishlisted ? Colors.red : Colors.black,
+                      ),
+                onPressed: isProcessing
+                    ? null
+                    : () {
+                        context.read<WishlistController>().toggleWishlist(
+                          context,
+                          productId: widget.product.id,
+                          product: widget.product,
+                        );
+                      },
+              );
+            },
           ),
         ),
         const SizedBox(width: 10),
@@ -126,7 +166,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
               return Image.network(
                 widget.product.imageUrl[index],
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => 
+                errorBuilder: (context, error, stackTrace) =>
                     const Center(child: Icon(Icons.broken_image, size: 50)),
               );
             },
@@ -168,11 +208,14 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-/* This rating star and static */
+  /* This rating star and static */
   Widget _buildRatingSection() {
     return Row(
       children: [
-        ...List.generate(4, (index) => const Icon(Icons.star, color: Colors.orange, size: 20)),
+        ...List.generate(
+          4,
+          (index) => const Icon(Icons.star, color: Colors.orange, size: 20),
+        ),
         const Icon(Icons.star_half, color: Colors.orange, size: 20),
         const SizedBox(width: 8),
         Text("4.8 (124 Reviews)", style: TextStyle(color: Colors.grey[600])),
@@ -185,16 +228,25 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     List<String> sizes = ['XS', 'S', 'M', 'L', 'XL'];
     return Row(
       children: sizes.map((size) {
-        bool isSelected = size == 'S'; 
+        bool isSelected = size == 'S';
         return Container(
           margin: const EdgeInsets.only(right: 12),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            border: Border.all(color: isSelected ? Colors.red : Colors.grey[300]!),
+            border: Border.all(
+              color: isSelected ? Colors.red : Colors.grey[300]!,
+            ),
             borderRadius: BorderRadius.circular(8),
-            color: isSelected ? Colors.red.withValues(alpha: 0.05) : Colors.transparent,
+            color: isSelected
+                ? Colors.red.withValues(alpha: 0.05)
+                : Colors.transparent,
           ),
-          child: Text(size, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+          child: Text(
+            size,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         );
       }).toList(),
     );
@@ -203,11 +255,17 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   Widget _buildExpandableSection(String title, String content) {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 15),
-          child: Text(content, style: TextStyle(color: Colors.grey[700], height: 1.5)),
+          child: Text(
+            content,
+            style: TextStyle(color: Colors.grey[700], height: 1.5),
+          ),
         ),
       ],
     );
@@ -228,7 +286,34 @@ class _ProductDetailViewState extends State<ProductDetailView> {
               border: Border.all(color: Colors.grey[300]!),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.chat_bubble_outline),
+            child: Consumer<WishlistController>(
+              builder: (context, wishlist, _) {
+                final isWishlisted = wishlist.isInWishlist(widget.product.id);
+                final isProcessing = wishlist.isProcessing(widget.product.id);
+
+                if (isProcessing) {
+                  return const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                }
+
+                return InkWell(
+                  onTap: () {
+                    context.read<WishlistController>().toggleWishlist(
+                      context,
+                      productId: widget.product.id,
+                      product: widget.product,
+                    );
+                  },
+                  child: Icon(
+                    isWishlisted ? Icons.favorite : Icons.favorite_outline,
+                    color: isWishlisted ? Colors.red : Colors.black87,
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -238,17 +323,25 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              onPressed: (widget.product.stock > 0 && !_isAddingToCart) ? () async {
+              onPressed: (widget.product.stock > 0 && !_isAddingToCart)
+                  ? () async {
                       setState(() => _isAddingToCart = true);
                       try {
-                        final cart = Provider.of<CartController>(context, listen: false);
+                        final cart = Provider.of<CartController>(
+                          context,
+                          listen: false,
+                        );
                         final success = await cart.addToCart(
                           context,
                           productId: widget.product.id,
                           name: widget.product.name,
-                          imageUrl: widget.product.imageUrl.isNotEmpty ? widget.product.imageUrl[0] : '',
+                          imageUrl: widget.product.imageUrl.isNotEmpty
+                              ? widget.product.imageUrl[0]
+                              : '',
                           size: 'M',
                           quantity: 1,
                           price: widget.product.price,
@@ -265,8 +358,23 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                       }
                     }
                   : null,
-              icon: _isAddingToCart ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))) : const Icon(Icons.shopping_bag_outlined),
-              label: Text(_isAddingToCart ? "Adding..." : (widget.product.stock > 0 ? "Add to Cart" : "Out of Stock")),
+              icon: _isAddingToCart
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_bag_outlined),
+              label: Text(
+                _isAddingToCart
+                    ? "Adding..."
+                    : (widget.product.stock > 0
+                          ? "Add to Cart"
+                          : "Out of Stock"),
+              ),
             ),
           ),
         ],

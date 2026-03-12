@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/validators.dart';
-import '../../utils/router/app_router.dart'; 
+import '../../utils/router/app_router.dart';
 import '../home/home_view.dart';
+import '../admin/admin_dashboard_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -27,6 +28,7 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    
     /* Listen to the AuthController for loading state changes */
     final auth = Provider.of<AuthController>(context);
 
@@ -43,17 +45,13 @@ class _LoginViewState extends State<LoginView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ClipOval(
-                    child: Image.asset(
-                      'assets/image/Urban.jpg',
+                    child: Image.asset( 'assets/image/Urban.jpg',
                       width: 160,
                       height: 100,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const Text(
-                    "Login to find your style",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
+                  const Text( "Login to find your style", textAlign: TextAlign.center,style: TextStyle(
                       color: Colors.grey,
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
@@ -81,10 +79,9 @@ class _LoginViewState extends State<LoginView> {
                       labelText: "Password",
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePass ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                        icon: Icon( _obscurePass ? Icons.visibility_off : Icons.visibility,),
+                        onPressed: () =>
+                            setState(() => _obscurePass = !_obscurePass),
                       ),
                     ),
                     validator: AppValidators.validatePassword,
@@ -116,20 +113,39 @@ class _LoginViewState extends State<LoginView> {
                               );
 
                               if (success && context.mounted) {
-                                // Navigate to Home on successful login
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeView(),
-                                  ),
-                                );
+                                
+                                /* Check user role and navigate accordingly */
+                                final userRole = auth.user?.role?.toUpperCase();
+                                if (userRole == 'ADMIN') {
+                                  
+                                  /* Navigate to Admin Dashboard for admin users */
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const AdminDashboardView(),
+                                    ),
+                                  );
+                                } else {
+                                  
+                                  /* Navigate to Home for regular users */
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const HomeView(),
+                                    ),
+                                  );
+                                }
                               } else if (!success && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Invalid email or password failed"),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                final message = auth.lastError?.trim();
+                                if (message != null && message.isNotEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(message),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },

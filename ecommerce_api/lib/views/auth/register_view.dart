@@ -41,18 +41,14 @@ class _RegisterViewState extends State<RegisterView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ClipOval(
-                    child: Image.asset(
-                      'assets/image/Urban.jpg',
+                    child: Image.asset( 'assets/image/Urban.jpg',
                       width: 160,
                       height: 100,
                       fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Create an account, With Urban Store',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
+                  const Text( 'Create an account, With Urban Store', textAlign: TextAlign.center,style: TextStyle(
                       color: Colors.grey,
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
@@ -99,7 +95,7 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Confirm Password
+                      /* Confirm Password */
                       TextFormField(
                         controller: confirmController,
                         obscureText: _obscureConfirm,
@@ -117,9 +113,7 @@ class _RegisterViewState extends State<RegisterView> {
                       const SizedBox(height: 30),
 
                       ElevatedButton(
-                        onPressed: auth.isLoading
-                            ? null
-                            : () async {
+                        onPressed: auth.isLoading ? null : () async {
                                 if (_formKey.currentState!.validate()) {
                                   final messenger = ScaffoldMessenger.of(context);
                                   bool success = await auth.register(
@@ -146,8 +140,7 @@ class _RegisterViewState extends State<RegisterView> {
                                   }
                                 }
                               },
-                        child: auth.isLoading
-                            ? const SizedBox(
+                        child: auth.isLoading ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -162,10 +155,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          'Already have an account',
-                          style: TextStyle(fontWeight: FontWeight.bold),),
-                      ),
+                        child: const Text( 'Already have an account', style: TextStyle(fontWeight: FontWeight.bold),), ),
                     ],
                   ),
                 ),

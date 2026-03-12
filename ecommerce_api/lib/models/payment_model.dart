@@ -1,6 +1,7 @@
 class PaymentResponse {
   final String? orderId;
   final String? paymentId;
+  final String? md5;
   final String? qrData;
   final String? qrImageUrl;
   final String? qrImageBase64;
@@ -9,6 +10,7 @@ class PaymentResponse {
   PaymentResponse({
     this.orderId,
     this.paymentId,
+    this.md5,
     this.qrData,
     this.qrImageUrl,
     this.qrImageBase64,
@@ -38,6 +40,7 @@ class PaymentResponse {
     final orderId = (getValue('orderId') ?? getValue('_id') ?? getValue('id'))
         ?.toString();
     final paymentId = getValue('paymentId')?.toString();
+    final md5 = getValue('md5')?.toString();
 
     final qrStringValue = getValue('qr_string')?.toString();
     final qrValue = findString([
@@ -54,9 +57,7 @@ class PaymentResponse {
     ]);
 
     final rawAmount = getValue('amount');
-    final amount = rawAmount is num
-        ? rawAmount.toDouble()
-        : double.tryParse(rawAmount?.toString() ?? '');
+    final amount = rawAmount is num ? rawAmount.toDouble() : double.tryParse(rawAmount?.toString() ?? '');
 
     String? qrData;
     String? qrImageUrl;
@@ -80,6 +81,7 @@ class PaymentResponse {
     return PaymentResponse(
       orderId: orderId,
       paymentId: paymentId,
+      md5: md5,
       qrData: qrData,
       qrImageUrl: qrImageUrl,
       qrImageBase64: qrImageBase64,

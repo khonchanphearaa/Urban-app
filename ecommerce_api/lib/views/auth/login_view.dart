@@ -87,10 +87,6 @@ class _LoginViewState extends State<LoginView> {
                     validator: AppValidators.validatePassword,
                   ),
 
-                  /**
-                   * @Forgot password link 
-                   * @description: for push to forgot password view
-                   */
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -149,8 +145,6 @@ class _LoginViewState extends State<LoginView> {
                               }
                             }
                           },
-
-                    /* This style ternary operatore: sytax condition ? valueIfTrue : valueIfFalse; */
                     child: auth.isLoading ? const SizedBox(
                             height: 20,
                             width: 20,

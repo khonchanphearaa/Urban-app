@@ -289,9 +289,6 @@ class _CartViewState extends State<CartView> {
             ? () async {
                 setState(() => _isCheckingOut = true);
                 try {
-                  await Future.delayed(
-                    const Duration(milliseconds: 500),
-                  ); // Simulate processing
                   if (context.mounted) {
                     Navigator.push(
                       context,

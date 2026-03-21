@@ -5,7 +5,7 @@ class SecureStorageService {
   static const _userKey = 'urban_user';
   static const _tokenKey = 'urban_token';
   static const _refreshTokenKey = 'urban_refresh_token';
-  static const _pendingPaymentOrderIdKey = 'urban_pending_payment_order_id';
+  static const _pendingPaymentMd5Key = 'urban_pending_payment_md5';
 
   static final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -53,15 +53,15 @@ class SecureStorageService {
     await _storage.delete(key: _userKey);
   }
 
-  static Future<void> savePendingPaymentOrderId(String orderId) async {
-    await _storage.write(key: _pendingPaymentOrderIdKey, value: orderId);
+  static Future<void> savePendingPaymentMd5(String md5) async {
+    await _storage.write(key: _pendingPaymentMd5Key, value: md5);
   }
 
-  static Future<String?> readPendingPaymentOrderId() async {
-    return await _storage.read(key: _pendingPaymentOrderIdKey);
+  static Future<String?> readPendingPaymentMd5() async {
+    return await _storage.read(key: _pendingPaymentMd5Key);
   }
 
-  static Future<void> deletePendingPaymentOrderId() async {
-    await _storage.delete(key: _pendingPaymentOrderIdKey);
+  static Future<void> deletePendingPaymentMd5() async {
+    await _storage.delete(key: _pendingPaymentMd5Key);
   }
 }

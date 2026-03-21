@@ -143,7 +143,7 @@ class _LoginViewState extends State<LoginView> {
                                   );
                                 }
                               }
-                            }
+                            } 
                           },
                     child: auth.isLoading ? const SizedBox(
                             height: 20,

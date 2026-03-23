@@ -21,6 +21,15 @@ class _RegisterViewState extends State<RegisterView> {
   bool _obscureConfirm = true;
 
   @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthController>(context);
 

@@ -115,7 +115,7 @@ class _VerifyOtpViewState extends State<VerifyOtpView> {
                           final navigator = Navigator.of(context);
                           final otp = _otpCode.trim();
 
-                          /* check condition for vertify code OTP 4 digit */
+                          /* Check that OTP has the required 4 digits */
                           if (otp.length != _otpLength) {
                             messenger.showSnackBar(
                               const SnackBar(

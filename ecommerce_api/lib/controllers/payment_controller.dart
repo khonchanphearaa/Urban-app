@@ -38,6 +38,10 @@ class PaymentController extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         payment = PaymentResponse.fromJson(body);
+        final generatedMd5 = payment?.md5?.trim();
+        if (generatedMd5 != null && generatedMd5.isNotEmpty) {
+          await SecureStorageService.savePendingPaymentMd5(generatedMd5);
+        }
         notifyListeners();
         return payment;
       }
@@ -103,6 +107,10 @@ class PaymentController extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         payment = PaymentResponse.fromJson(body);
+        final generatedMd5 = payment?.md5?.trim();
+        if (generatedMd5 != null && generatedMd5.isNotEmpty) {
+          await SecureStorageService.savePendingPaymentMd5(generatedMd5);
+        }
         notifyListeners();
         return payment;
       }
@@ -145,7 +153,7 @@ class PaymentController extends ChangeNotifier {
   /* Check payment status.*/
   Future<String?> checkStatus(
     BuildContext context, {
-    required String orderId,
+    required String md5,
   }) async {
     isChecking = true;
     notifyListeners();
@@ -157,23 +165,24 @@ class PaymentController extends ChangeNotifier {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      final normalizedMd5 = md5.trim();
+      if (normalizedMd5.isEmpty) {
+        lastError = 'Missing payment identifier (md5).';
+        return null;
+      }
+
       final response = await http.post(
         Uri.parse('${ApiConstants.apiBaseUrl}/payments/checkStatus'),
         headers: headers,
-        body: jsonEncode({'orderId': orderId}),
+        body: jsonEncode({'md5': normalizedMd5}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final payload = jsonDecode(response.body);
 
-        // DEBUG — remove once confirmed working
-        debugPrint('[checkStatus] raw response: ${response.body}');
-
         if (payload is Map<String, dynamic>) {
           final rawStatus = payload['status']?.toString().toUpperCase().trim();
           final isSuccess = payload['success'] == true;
-
-          debugPrint('[checkStatus] success=$isSuccess  status=$rawStatus');
 
           if (isSuccess && rawStatus == 'PAID') {
             status = 'PAID';

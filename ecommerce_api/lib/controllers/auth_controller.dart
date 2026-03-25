@@ -103,7 +103,7 @@ class AuthController extends ChangeNotifier {
   }
 
   String _mapLoginExceptionToMessage(Object e) {
-    return '';
+    return 'Login failed. Please try again.';
   }
 
   /* Control Login */
@@ -348,31 +348,7 @@ class AuthController extends ChangeNotifier {
       if (res.statusCode >= 200 && res.statusCode < 300) {
         final Map<String, dynamic> body = jsonDecode(res.body);
 
-        final Map<String, dynamic> normalized = {};
-        if (body['user'] != null) normalized['user'] = body['user'];
-        if (body['token'] != null) normalized['token'] = body['token'];
-        if (body['access_token'] != null) {
-          normalized['token'] = body['access_token'];
-        }
-        if (body['accessToken'] != null){
-          normalized['token'] = body['accessToken'];
-        }
-        if (body['data'] is Map) {
-          final data = body['data'] as Map<String, dynamic>;
-          if (data['user'] != null) normalized['user'] = data['user'];
-          if (data['token'] != null) normalized['token'] = data['token'];
-          if (data['access_token'] != null) {
-            normalized['token'] = data['access_token'];
-          }
-          if (data['accessToken'] != null) {
-            normalized['token'] = data['accessToken'];
-          }
-        }
-
-        if (normalized['user'] == null && body.containsKey('email')) {
-          normalized['user'] = body;
-        }
-
+        final normalized = _normalizeAuthBody(body);
         user = UserModel.fromJson(normalized);
         lastError = null;
         return true;
@@ -422,11 +398,8 @@ class AuthController extends ChangeNotifier {
         body: jsonEncode({'email': email}),
       );
       
-      /* Log request/response for debugging */
-      // ignore: avoid_print
-      print( 'ForgotPassword request -> ${ApiConstants.forgotPassword} body: ${jsonEncode({'email': email})}',);
-      // ignore: avoid_print
-      print('ForgotPassword response (${res.statusCode}): ${res.body}');
+      debugPrint('ForgotPassword request body: ${jsonEncode({'email': email})}');
+      debugPrint('ForgotPassword response (${res.statusCode}): ${res.body}');
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
         try {

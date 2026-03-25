@@ -122,13 +122,13 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // Remove item
+  /* Remove item by productId and size */
   void removeItem(String productId, String size) {
     _items.removeWhere((i) => i.id == productId && i.size == size);
     notifyListeners();
   }
 
-  // Update quantity
+  /* Update quantity for an existing item */
   void updateQuantity(String productId, String size, int quantity) {
     final idx = _items.indexWhere((i) => i.id == productId && i.size == size);
     if (idx >= 0) {
@@ -151,7 +151,7 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /* Fucntion checkout: post items to API to update stock */
+  /* Function to checkout: post items to API to update stock */
   Future<bool> checkoutAndUpdateStock(BuildContext context) async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

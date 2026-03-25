@@ -45,13 +45,13 @@ class AddressController extends ChangeNotifier {
           ),
   );
 
-  /* Duration swith when laod address static */
+  /* Delay to simulate loading static addresses */
   Future<void> fetchAddresses() async {
     await Future.delayed(const Duration(milliseconds: 500));
     notifyListeners();
   }
 
-  /* This add a new address but is static only */
+  /* Add a new address (static only, no API) */
   Future<bool> addAddress(AddressModel address) async {
     await Future.delayed(const Duration(milliseconds: 300));
 

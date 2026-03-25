@@ -5,11 +5,14 @@ import '../constants/api_constants.dart';
 import '../models/category_model.dart';
 
 class CategoryController extends ChangeNotifier {
-  List<CategoryModel> categories = [];
-  bool isLoading = false;
+  List<CategoryModel> _categories = [];
+  bool _isLoading = false;
+
+  List<CategoryModel> get categories => _categories;
+  bool get isLoading => _isLoading;
 
   Future<void> getCategories() async {
-    isLoading = true;
+    _isLoading = true;
     notifyListeners();
 
     try {
@@ -18,12 +21,12 @@ class CategoryController extends ChangeNotifier {
       if (response.statusCode == 200) {
         final Map<String, dynamic> decoded = jsonDecode(response.body);
         final List<dynamic> dataList = decoded['data'] ?? decoded['categories'] ?? [];
-        categories = dataList.map((e) => CategoryModel.fromJson(e)).toList();
+        _categories = dataList.map((e) => CategoryModel.fromJson(e)).toList();
       }
     } catch (e) {
       debugPrint('Categories fetch error: $e');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }

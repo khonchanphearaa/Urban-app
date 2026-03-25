@@ -19,7 +19,7 @@ class OrderController extends ChangeNotifier {
     try {
       final token = await SecureStorageService.readToken();
       final headers = <String, String>{'Content-Type': 'application/json'};
-      if (token != null && token.isNotEmpty){
+      if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
 

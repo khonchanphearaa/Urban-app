@@ -5,34 +5,36 @@ import '../constants/api_constants.dart';
 import '../models/product_model.dart';
 
 class ProductController extends ChangeNotifier {
-  List<ProductModel> products = [];
-  bool isLoading = false;
+  List<ProductModel> _products = [];
+  bool _isLoading = false;
+
+  List<ProductModel> get products => _products;
+  bool get isLoading => _isLoading;
 
   Future<void> getAllProducts() async {
-    isLoading = true;
+    _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await http.get(Uri.parse("${ApiConstants.apiBaseUrl}/products"));
-      
+      final response = await http.get(Uri.parse('${ApiConstants.apiBaseUrl}/products'));
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> decodedData = jsonDecode(response.body);
-        final List<dynamic> productList = decodedData['data']; 
-        
-        products = productList.map((item) => ProductModel.fromJson(item)).toList();
+        final List<dynamic> productList = decodedData['data'];
+
+        _products = productList.map((item) => ProductModel.fromJson(item)).toList();
       }
     } catch (e) {
-      debugPrint("API Error: $e");
+      debugPrint('API Error: $e');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-
-  /* Get categories */
+  /* Get products by category */
   Future<void> getProductsByCategory(String categoryId) async {
-    isLoading = true;
+    _isLoading = true;
     notifyListeners();
 
     try {
@@ -42,12 +44,12 @@ class ProductController extends ChangeNotifier {
       if (response.statusCode == 200) {
         final Map<String, dynamic> decodedData = jsonDecode(response.body);
         final List<dynamic> productList = decodedData['data'] ?? [];
-        products = productList.map((item) => ProductModel.fromJson(item)).toList();
+        _products = productList.map((item) => ProductModel.fromJson(item)).toList();
       }
     } catch (e) {
       debugPrint('API Error (by category): $e');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }

@@ -141,7 +141,7 @@ class AdminUserController extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         _error = null;
-        // Refresh current page
+        /* Refresh current page */
         await fetchUsers(page: _currentPage);
         return true;
       } else {
@@ -183,7 +183,7 @@ class AdminUserController extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         _error = null;
-        // Refresh current page
+        /* Refresh current page */
         await fetchUsers(page: _currentPage);
         return true;
       } else {
@@ -221,7 +221,7 @@ class AdminUserController extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         _error = null;
-        // Refresh current page
+        /* Refresh current page */
         await fetchUsers(page: _currentPage);
         return true;
       } else {

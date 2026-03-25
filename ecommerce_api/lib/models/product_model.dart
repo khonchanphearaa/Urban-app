@@ -45,7 +45,7 @@ class ProductModel {
       return value.toString();
     }
 
-/* Helper function to parse category name with fallback */
+    /* Helper function to parse category name with fallback */
     String parseCategoryName(dynamic value) {
       if (value is Map<String, dynamic>) {
         return value['name']?.toString() ?? 'General';

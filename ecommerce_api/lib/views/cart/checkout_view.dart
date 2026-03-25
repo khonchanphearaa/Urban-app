@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../controllers/cart_controller.dart';
 import '../../controllers/order_controller.dart';
 import '../../models/order_model.dart';
-import '../../services/secure_storage_service.dart';
 import '../payment/bakong_payment_view.dart';
 
 class CheckoutView extends StatefulWidget {
@@ -163,7 +162,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                 cartController.clearCart();
 
                 if (_paymentMethod == 'BAKONG_KHQR') {
-                  await SecureStorageService.savePendingPaymentOrderId(orderId);
                   if (!mounted) return;
                   Navigator.push(
                     context,

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/cart_controller.dart';
-import '../../controllers/wishlist_controller.dart';
 import '../../models/cart_item.dart';
-import '../../widgets/app_bottom_nav_bar.dart';
-import '../home/home_view.dart';
-import '../profile/profile_view.dart';
-import '../wishlist/wishlist_view.dart';
 import 'checkout_view.dart';
 
 class CartView extends StatefulWidget {
@@ -21,7 +16,6 @@ class _CartViewState extends State<CartView> {
 
   @override
   Widget build(BuildContext context) {
-    final wishlistCount = context.watch<WishlistController>().count;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -30,10 +24,7 @@ class _CartViewState extends State<CartView> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
-        title: const Text(
-          "Shopping Cart",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Shopping Cart", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),),
         actions: [
           TextButton(
             onPressed: () {
@@ -76,37 +67,9 @@ class _CartViewState extends State<CartView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildCheckoutButton(context),
-          AppBottomNavBar(
-            currentIndex: 0,
-            wishlistCount: wishlistCount,
-            onTap: _handleNavTap,
-          ),
         ],
       ),
     );
-  }
-
-  void _handleNavTap(int index) {
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeView()),
-      );
-      return;
-    }
-    if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const WishlistView()),
-      );
-      return;
-    }
-    if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfileView()),
-      );
-    }
   }
 
   Widget _buildCartItemFromModel(BuildContext context, CartItem item) {
@@ -129,8 +92,7 @@ class _CartViewState extends State<CartView> {
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: item.imageUrl.isNotEmpty
-                ? Image.network(
+            child: item.imageUrl.isNotEmpty ? Image.network(
                     item.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) =>

@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../constants/api_constants.dart';
-import '../services/secure_storage_service.dart';
+import '../services/api_service.dart';
 
 class AiChatMessage {
   final String text;
@@ -32,36 +30,25 @@ class AiChatController extends ChangeNotifier {
   bool get isSending => _isSending;
   bool get isClearing => _isClearing;
 
+  /* Send message to AI */
   Future<void> sendMessage(String message) async {
     final trimmed = message.trim();
     if (trimmed.isEmpty || _isSending) return;
 
-    _messages.add(
-      AiChatMessage(text: trimmed, isUser: true, createdAt: DateTime.now()),
-    );
+    _messages.add(AiChatMessage(text: trimmed, isUser: true, createdAt: DateTime.now()));
     _isSending = true;
     notifyListeners();
 
     try {
-      final token = await SecureStorageService.readToken();
-      final headers = <String, String>{'Content-Type': 'application/json'};
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
       /* REST api ai chat */
-      final response = await http.post(
-        Uri.parse('${ApiConstants.apiBaseUrl}/ai/chat'),
-        headers: headers,
-        body: jsonEncode({'message': trimmed}),
-      );
+      final response = await ApiService.post('/ai/chat', {'message': trimmed});
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Failed to get AI response (${response.statusCode})');
       }
 
       final body = jsonDecode(response.body);
-      final reply = body is Map<String, dynamic> ? (body['reply']?.toString() ?? 'No response from AI.') : 'Invalid AI response.';
+      final reply = body is Map<String, dynamic> ? (body['reply']?.toString() ?? 'No response from AI.'): 'Invalid AI response.';
 
       _messages.add(
         AiChatMessage(
@@ -69,11 +56,11 @@ class AiChatController extends ChangeNotifier {
           isUser: false,
           createdAt: DateTime.now(),
         ),
-      ); 
+      );
     } catch (_) {
       _messages.add(
         AiChatMessage(
-          text: 'Sorry, AI chat is unavailable right now. Please try again. If not yet logged in, please login or register.',
+          text:'Sorry, AI chat is unavailable right now. Please try again. If not yet logged in, please login or register.',
           isUser: false,
           createdAt: DateTime.now(),
         ),
@@ -84,6 +71,7 @@ class AiChatController extends ChangeNotifier {
     }
   }
 
+  /* Clear the chat history */
   Future<bool> clearChat() async {
     if (_isClearing) return false;
 
@@ -91,16 +79,7 @@ class AiChatController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SecureStorageService.readToken();
-      final headers = <String, String>{'Content-Type': 'application/json'};
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.apiBaseUrl}/ai/chat/history'),
-        headers: headers,
-      );
+      final response = await ApiService.delete('/ai/chat/history');
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Failed to clear AI chat history');

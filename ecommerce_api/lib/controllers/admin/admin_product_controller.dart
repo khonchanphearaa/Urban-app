@@ -65,9 +65,7 @@ class AdminProductController extends ChangeNotifier {
       final query = {'page': page.toString(), 'limit': _limit.toString()};
 
       final response = await http.get(
-        Uri.parse(
-          '${ApiConstants.apiBaseUrl}/products',
-        ).replace(queryParameters: query),
+        Uri.parse('${ApiConstants.apiBaseUrl}/products',).replace(queryParameters: query),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -79,9 +77,7 @@ class AdminProductController extends ChangeNotifier {
         final dynamic dataField = data['data'];
         final List<dynamic> safeProducts = dataField is List
             ? List<dynamic>.from(dataField)
-            : (data['products'] is List
-                  ? List<dynamic>.from(data['products'])
-                  : <dynamic>[]);
+            : (data['products'] is List ? List<dynamic>.from(data['products']): <dynamic>[]);
 
         _products = safeProducts
             .whereType<Map>()
@@ -136,10 +132,7 @@ class AdminProductController extends ChangeNotifier {
         throw Exception('Not authenticated');
       }
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${ApiConstants.apiBaseUrl}/products'),
-      );
+      var request = http.MultipartRequest('POST',Uri.parse('${ApiConstants.apiBaseUrl}/products'),);
 
       request.headers['Authorization'] = 'Bearer $token';
       request.fields['name'] = name;

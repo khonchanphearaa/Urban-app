@@ -33,10 +33,7 @@ class OrderController extends ChangeNotifier {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         final orderId = OrderResponse.fromJson(body).orderId;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order placed successfully'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Order placed successfully'),backgroundColor: Colors.green,),
         );
         return orderId;
       }

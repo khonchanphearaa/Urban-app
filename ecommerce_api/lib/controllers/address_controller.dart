@@ -32,9 +32,7 @@ class AddressController extends ChangeNotifier {
 
   AddressModel? get defaultAddress => _addresses.firstWhere(
     (addr) => addr.isDefault,
-    orElse: () => _addresses.isNotEmpty
-        ? _addresses.first
-        : AddressModel(
+    orElse: () => _addresses.isNotEmpty ? _addresses.first: AddressModel(
             recipientName: '',
             phoneNumber: '',
             addressLine1: '',

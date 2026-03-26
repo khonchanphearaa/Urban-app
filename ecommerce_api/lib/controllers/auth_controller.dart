@@ -112,8 +112,7 @@ class AuthController extends ChangeNotifier {
     lastError = null;
     try {
       final payload = jsonEncode({'email': email, 'password': password});
-      final res = await http.post(
-        Uri.parse(ApiConstants.login),
+      final res = await http.post( Uri.parse(ApiConstants.login),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

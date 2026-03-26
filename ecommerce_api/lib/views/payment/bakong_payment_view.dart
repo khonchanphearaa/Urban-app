@@ -24,8 +24,7 @@ class BakongPaymentView extends StatefulWidget {
 }
 
 class _BakongPaymentViewState extends State<BakongPaymentView> {
-  static const int _expirySeconds =
-      2 * 60; // backend expires QR after 2 minutes
+  static const int _expirySeconds = 2 * 60; // backend expires QR after 2 minutes
   late int _remainingSeconds;
   Timer? _timer;
   Timer? _statusTimer;
@@ -73,10 +72,7 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
       final md5 = controller.payment?.md5;
       if (md5 == null || md5.isEmpty) return;
 
-      final status = await controller.checkStatus(
-        context,
-        orderId: widget.orderId,
-      );
+      final status = await controller.checkStatus(context, md5: md5);
 
       if (!mounted) return;
 
@@ -105,7 +101,6 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
       } else if (normalized == 'CANCELLED' ||
           normalized == 'EXPIRED' ||
           normalized == 'FAILED') {
-        
         /* QR expired or payment failed — stop polling */
         timer.cancel();
         _timer?.cancel();
@@ -138,7 +133,7 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
-        title: const Text( 'Pay with KHQR', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold), ),
+        title: const Text( 'Pay with KHQR', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),),
       ),
       body: Stack(
         children: [
@@ -183,7 +178,8 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [ BoxShadow(
+        boxShadow: [
+          BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 18,
           ),
@@ -204,10 +200,7 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Scan to Pay',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
+                const Text( 'Scan to Pay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
                 const SizedBox(height: 4),
                 Text(
                   widget.orderLabel,
@@ -218,11 +211,11 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text( 'Order ID: ${widget.orderId}', style: const TextStyle(color: Colors.black54, fontSize: 11), ),
+                Text( 'Order ID: ${widget.orderId}',style: const TextStyle(color: Colors.black54, fontSize: 11),),
               ],
             ),
           ),
-          Text( '\$${displayAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+          Text( '\$${displayAmount.toStringAsFixed(2)}',style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
         ],
       ),
     );
@@ -294,7 +287,6 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
             ),
             const SizedBox(height: 12),
           ] else if (response?.md5 != null && response!.md5!.isNotEmpty) ...[
-            
             /* Show active checking indicator when MD5 exists */
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -334,9 +326,12 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
           ],
           content,
           const SizedBox(height: 12),
-          const Text( 'Scan with Bakong or your bank app', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17), ),
+          const Text( 'Scan with Bakong or your bank app', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17),),
           const SizedBox(height: 6),
-          Text( 'This QR will expire after a short time. Please complete payment soon.', style: TextStyle(color: Colors.grey[600], fontSize: 12), textAlign: TextAlign.center, ),
+          Text('This QR will expire after a short time. Please complete payment soon.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -349,7 +344,8 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
               children: [
                 const Icon(Icons.timer, size: 16, color: Color(0xFF0055FF)),
                 const SizedBox(width: 6),
-                Text('Expires in ${_formatRemaining()}', style: const TextStyle(
+                Text( 'Expires in ${_formatRemaining()}',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0055FF),
                   ),
@@ -362,7 +358,9 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: payment.status == 'PAID' ? const Color(0xFF1A7F5A) : const Color(0xFFE0B15A), borderRadius: BorderRadius.circular(8), ),
+                      color: payment.status == 'PAID' ? const Color(0xFF1A7F5A) : const Color(0xFFE0B15A),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
                       payment.status!,
                       style: const TextStyle(
@@ -380,10 +378,7 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
           OutlinedButton.icon(
             onPressed: payment.isLoading ? null : () async {
                     final controller = context.read<PaymentController>();
-                    await controller.retryBakongQr(
-                      context,
-                      orderId: widget.orderId,
-                    );
+                    await controller.retryBakongQr( context, orderId: widget.orderId,);
                     if (!mounted) return;
                     setState(() => _remainingSeconds = _expirySeconds);
                     _startTimer();
@@ -445,7 +440,10 @@ class _BakongPaymentViewState extends State<BakongPaymentView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text( 'Payment Steps', style: TextStyle(fontWeight: FontWeight.bold), ),
+          const Text(
+            'Payment Steps',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           _stepRow('1', 'Open your banking app and select Scan QR.'),
           _stepRow('2', 'Scan the QR code and verify the amount.'),

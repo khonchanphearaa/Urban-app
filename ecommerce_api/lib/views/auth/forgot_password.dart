@@ -38,14 +38,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/image/Urban.jpg',
-                      width: 160,
-                      height: 100,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  ClipOval( child: Image.asset('assets/image/Urban.jpg',width: 160,height: 100,fit: BoxFit.cover,),),
                   const SizedBox(height: 10),
                   const Text(
                     "Enter your email to receive an OTP code.",

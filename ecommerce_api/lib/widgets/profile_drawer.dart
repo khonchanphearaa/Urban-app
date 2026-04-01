@@ -72,8 +72,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                       ],
                     ),
                     child: ClipOval(
-                      child: hasAvatar
-                          ? Image.network(
+                      child: hasAvatar ? Image.network(
                               user!.avatar!,
                               width: 80,
                               height: 80,
@@ -274,7 +273,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
     if (confirmed == true && context.mounted) {
       await SecureStorageService.deleteToken();
       await SecureStorageService.deleteUser();
-      await SecureStorageService.deletePendingPaymentOrderId();
+      await SecureStorageService.deletePendingPaymentMd5();
       await NotificationAlertStorage.clearAlerts();
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
